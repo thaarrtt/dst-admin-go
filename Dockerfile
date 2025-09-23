@@ -35,8 +35,11 @@ RUN chmod 755 /app/docker-entrypoint.sh
 
 COPY config.yml /app/config.yml
 COPY docker_dst_config /app/dst_config
-COPY dist /app/dist
 COPY static /app/static
+
+# 创建API-only模式所需的目录结构
+# 为兼容性创建空的dist目录（即使不使用前端）
+RUN mkdir -p /app/dist/assets /app/dist/static/js /app/dist/static/css /app/dist/static/img /app/dist/static/fonts /app/dist/static/media
 
 # 内嵌源配置信息
 # 控制面板访问的端口
