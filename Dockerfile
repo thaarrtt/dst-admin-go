@@ -13,6 +13,7 @@ RUN echo "* soft nofile 65536" >> /etc/security/limits.conf && \
 RUN dpkg --add-architecture i386 && \
     apt-get update && \
     apt-get install -y \
+    bash \
     curl \
     libcurl4-gnutls-dev:i386 \
     lib32gcc1 \
@@ -45,13 +46,15 @@ WORKDIR /app
 # 拷贝源代码
 COPY . /app
 
+# 设置脚本权限（在构建应用程序之前）
+RUN chmod +x /app/docker-entrypoint.sh
+
 # 构建应用程序
 RUN go mod tidy && \
     go build -o dst-admin-go .
 
-# 设置权限
+# 设置二进制文件权限
 RUN chmod 755 /app/dst-admin-go
-RUN chmod 755 /app/docker-entrypoint.sh
 
 # 创建必要的目录结构
 RUN mkdir -p /app/steamcmd \
@@ -59,11 +62,6 @@ RUN mkdir -p /app/steamcmd \
     && mkdir -p /root/.klei/DoNotStarveTogether \
     && mkdir -p /app/backup \
     && mkdir -p /app/mod
-
-# 拷贝配置文件
-COPY config.yml /app/config.yml
-COPY docker_dst_config /app/dst_config
-COPY static /app/static
 
 # 创建API-only模式所需的目录结构
 # 为兼容性创建空的dist目录（即使不使用前端）
@@ -87,4 +85,4 @@ EXPOSE 10999/udp
 WORKDIR /app
 
 # 运行命令
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

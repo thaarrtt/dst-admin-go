@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Debug information
+echo "=== Docker Entrypoint Debug Info ==="
+echo "Current user: $(whoami)"
+echo "Working directory: $(pwd)"
+echo "Script path: $0"
+echo "PATH: $PATH"
+echo "Available shells: $(which bash sh)"
+echo "==================================="
+
 # 修正最大文件描述符数，部分docker版本给的默认值过高，会导致screen运行卡顿
 # This fixes the slow startup issue mentioned in issue #80
 ulimit -Sn 65536
@@ -54,7 +63,6 @@ done
 # 运行其他命令，这里只是做示例
 echo "SteamCMD installed at $steam_cmd_path"
 echo "SteamDST server installed at $steam_dst_server"
-
 
 cd /app
 exec ./dst-admin-go
