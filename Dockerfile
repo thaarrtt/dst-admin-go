@@ -40,21 +40,22 @@ RUN apt-get update && \
 ENV PATH=$PATH:/usr/local/go/bin
 ENV GOROOT=/usr/local/go
 
-# 设置工作目录
-WORKDIR /app
+# 创建应用目录并设置为工作目录
+RUN mkdir -p /app-src
+WORKDIR /app-src
 
-# 拷贝源代码
-COPY . /app
+# 拷贝源代码到不会被卷挂载覆盖的目录
+COPY . /app-src
 
-# 设置脚本权限（在构建应用程序之前）
-RUN chmod +x /app/docker-entrypoint.sh
+# 设置脚本权限
+RUN chmod +x /app-src/docker-entrypoint.sh
 
 # 构建应用程序
 RUN go mod tidy && \
     go build -o dst-admin-go .
 
 # 设置二进制文件权限
-RUN chmod 755 /app/dst-admin-go
+RUN chmod 755 /app-src/dst-admin-go
 
 # 创建必要的目录结构
 RUN mkdir -p /app/steamcmd \
@@ -82,7 +83,7 @@ EXPOSE 10998/udp
 EXPOSE 10999/udp
 
 # 设置工作目录
-WORKDIR /app
+WORKDIR /app-src
 
-# 运行命令
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+# 运行命令 - 使用不会被卷挂载覆盖的脚本位置
+ENTRYPOINT ["/app-src/docker-entrypoint.sh"]

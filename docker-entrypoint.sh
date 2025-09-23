@@ -64,5 +64,5 @@ done
 echo "SteamCMD installed at $steam_cmd_path"
 echo "SteamDST server installed at $steam_dst_server"
 
-cd /app
+cd /app-src
 exec ./dst-admin-go
