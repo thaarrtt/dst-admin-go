@@ -23,16 +23,32 @@ RUN dpkg --add-architecture i386 && \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
+# 安装 Go 以构建应用程序
+RUN apt-get update && \
+    apt-get install -y wget tar && \
+    wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz && \
+    rm go1.21.0.linux-amd64.tar.gz
+
+# 设置 Go 环境变量
+ENV PATH=$PATH:/usr/local/go/bin
+ENV GOROOT=/usr/local/go
+
 # 设置工作目录
 WORKDIR /app
 
-# 拷贝程序二进制文件
-COPY dst-admin-go /app/dst-admin-go
-RUN chmod 755 /app/dst-admin-go
+# 拷贝源代码
+COPY . /app
 
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+# 构建应用程序
+RUN go mod tidy && \
+    go build -o dst-admin-go .
+
+# 设置权限
+RUN chmod 755 /app/dst-admin-go
 RUN chmod 755 /app/docker-entrypoint.sh
 
+# 拷贝配置文件
 COPY config.yml /app/config.yml
 COPY docker_dst_config /app/dst_config
 COPY static /app/static
