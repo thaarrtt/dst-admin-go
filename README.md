@@ -24,6 +24,45 @@
 
 点击查看 [部署文档](https://carrot-hu23.github.io/dst-admin-go-docs/)
 
+## Docker 部署
+
+### 简单运行方式
+
+使用提供的脚本快速启动容器：
+
+```bash
+# 给脚本执行权限
+chmod +x run-dst-admin.sh
+
+# 运行容器（默认设置）
+./run-dst-admin.sh
+
+# 自定义设置
+./run-dst-admin.sh -n my-dst-server -p 8080
+```
+
+### 手动运行方式
+
+```bash
+# 构建镜像
+./docker_build.sh latest
+
+# 运行容器（注意设置正确的 ulimit 和端口）
+docker run -d \
+  --name dst-admin-go \
+  -p 8082:8082 \
+  -p 10998:10998/udp \
+  -p 10999:10999/udp \
+  --ulimit nofile=65536:65536 \
+  hujinbo23/dst-admin-go:latest
+```
+
+查看 [Docker 部署指南](DOCKER_DEPLOYMENT.md) 获取详细的 Docker 部署说明，包括：
+- 端口配置
+- 性能优化设置
+- 数据持久化
+- 故障排除
+
 ## 预览
 
 ![首页效果](docs/image/登录.png)
