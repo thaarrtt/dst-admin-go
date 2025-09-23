@@ -13,9 +13,9 @@ echo "==================================="
 # This fixes the slow startup issue mentioned in issue #80
 ulimit -Sn 65536
 
-# 获取传入的参数
-steam_cmd_path='/app/steamcmd'
-steam_dst_server='/app/dst-dedicated-server'
+# 获取传入的参数 - 使用 /data 目录
+steam_cmd_path='/data/steamcmd'
+steam_dst_server='/data/dst-dedicated-server'
 
 # 判断 steam_cmd_path 是否存在，不存在则创建
 if [ ! -d "$steam_cmd_path" ]; then
@@ -48,13 +48,13 @@ while [ ! -e "${steam_dst_server}/bin/dontstarve_dedicated_server_nullrenderer" 
   fi
   echo "Not found Dont Starve Together Sever, start to installing, try: ${retry}"
   bash $steam_cmd_path/steamcmd.sh +force_install_dir $steam_dst_server +login anonymous +app_update 343050 validate +quit
-  mkdir -p $USER_DIR/.klei/DoNotStarveTogether/MyDediServer
-  mkdir -p /app/backup
-  mkdir -p /app/mod
-  echo "username=admin" >> /app/password.txt
-  echo "password=123456" >> /app/password.txt
-  echo "displayName=admin" >> /app/password.txt
-  echo "photoURL=xxx" >> /app/password.txt
+  mkdir -p /data/saves/MyDediServer
+  mkdir -p /data/backup
+  mkdir -p /data/mod
+  echo "username=admin" >> /data/password.txt
+  echo "password=123456" >> /data/password.txt
+  echo "displayName=admin" >> /data/password.txt
+  echo "photoURL=xxx" >> /data/password.txt
   sleep 3
   ((retry++))
 done
@@ -64,5 +64,5 @@ done
 echo "SteamCMD installed at $steam_cmd_path"
 echo "SteamDST server installed at $steam_dst_server"
 
-cd /app-src
+cd /service
 exec ./dst-admin-go

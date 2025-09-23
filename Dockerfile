@@ -29,61 +29,57 @@ RUN dpkg --add-architecture i386 && \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# 安装 Go 以构建应用程序
+# 安装 Go 以构建应用程序到 /opt 目录避免与卷挂载冲突
 RUN apt-get update && \
     apt-get install -y wget tar && \
     wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz && \
+    mkdir -p /opt/go && \
+    tar -C /opt/go -xzf go1.21.0.linux-amd64.tar.gz && \
     rm go1.21.0.linux-amd64.tar.gz
 
 # 设置 Go 环境变量
-ENV PATH=$PATH:/usr/local/go/bin
-ENV GOROOT=/usr/local/go
+ENV PATH=$PATH:/opt/go/go/bin
+ENV GOROOT=/opt/go/go
 
-# 创建应用目录并设置为工作目录
-RUN mkdir -p /app-src
-WORKDIR /app-src
+# 使用完全独立的目录避免与任何可能的卷挂载冲突
+WORKDIR /service
 
-# 拷贝源代码到不会被卷挂载覆盖的目录
-COPY . /app-src
+# 拷贝 entrypoint 脚本到根目录
+COPY docker-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# 设置脚本权限
-RUN chmod +x /app-src/docker-entrypoint.sh
+# 拷贝源代码到 /service
+COPY . /service
+
+# 确保 entrypoint 脚本权限正确
+RUN chmod +x /service/docker-entrypoint.sh
 
 # 构建应用程序
-RUN go mod tidy && \
-    go build -o dst-admin-go .
+RUN cd /service && go mod tidy && go build -o dst-admin-go
 
 # 设置二进制文件权限
-RUN chmod 755 /app-src/dst-admin-go
+RUN chmod 755 /service/dst-admin-go
 
-# 创建必要的目录结构
-RUN mkdir -p /app/steamcmd \
-    && mkdir -p /app/dst-dedicated-server \
-    && mkdir -p /root/.klei/DoNotStarveTogether \
-    && mkdir -p /app/backup \
-    && mkdir -p /app/mod
+# 创建必要的数据目录（使用 /data 避免冲突）
+RUN mkdir -p /data/steamcmd \
+    && mkdir -p /data/dst-dedicated-server \
+    && mkdir -p /data/saves \
+    && mkdir -p /data/backup \
+    && mkdir -p /data/mod
 
 # 创建API-only模式所需的目录结构
-# 为兼容性创建空的dist目录（即使不使用前端）
-RUN mkdir -p /app/dist/assets /app/dist/static/js /app/dist/static/css /app/dist/static/img /app/dist/static/fonts /app/dist/static/media
+RUN mkdir -p /service/dist/assets /service/dist/static/js /service/dist/static/css /service/dist/static/img /service/dist/static/fonts /service/dist/static/media
 
-# 设置默认环境变量
-ENV STEAMCMD_PATH=/app/steamcmd
-ENV DST_SERVER_PATH=/app/dst-dedicated-server
+# 设置环境变量
+ENV STEAMCMD_PATH=/data/steamcmd
+ENV DST_SERVER_PATH=/data/dst-dedicated-server
+ENV SAVES_PATH=/data/saves
 
-# 内嵌源配置信息
-# 控制面板访问的端口
+# 端口配置
 EXPOSE 8082/tcp
-# 饥荒世界通信的端口
 EXPOSE 10888/udp
-# 饥荒洞穴世界的端口
 EXPOSE 10998/udp
-# 饥荒森林世界的端口
 EXPOSE 10999/udp
 
-# 设置工作目录
-WORKDIR /app-src
-
-# 运行命令 - 使用不会被卷挂载覆盖的脚本位置
-ENTRYPOINT ["/app-src/docker-entrypoint.sh"]
+# 使用根目录的标准 entrypoint 路径避免冲突
+ENTRYPOINT ["/entrypoint.sh"]
